@@ -1,17 +1,17 @@
 import '@tensorflow/tfjs-node';
 import tf from '@tensorflow/tfjs-core';
 import use from '@tensorflow-models/universal-sentence-encoder';
-
-const model = await use.load();
+import { promises as fs } from 'fs';
 
 export class Embeder {
     model: use.UniversalSentenceEncoder;
     embeddings: {
         [sentence: string]: tf.Tensor1D; // 512
-    } = {};
+    };
 
-    constructor(model: use.UniversalSentenceEncoder) {
+    constructor(model: use.UniversalSentenceEncoder, embeddings: { [sentence: string]: tf.Tensor1D; } = {}) {
         this.model = model;
+        this.embeddings = embeddings;
     }
     static async new() {
         const model = await use.load();
@@ -65,11 +65,31 @@ export class Embeder {
     }
 
     toJson() {
-        return JSON.stringify(this.embeddings);
+        return JSON.stringify(Object.entries(this.embeddings).map(([sentence, embedding]) => [sentence, Object.values(embedding.dataSync())]));
+    }
+
+    static async fromJson(json: string) {
+        const objEmbeddings = JSON.parse(json) as [string, number[]][]; // [sentence, embedding]
+        let embeddings: {
+            [sentence: string]: tf.Tensor1D;
+        } = {};
+        for (const [sentence, embedding] of objEmbeddings) {
+            embeddings[sentence] = tf.tensor1d(embedding);
+        }
+        const model = await use.load();
+        return new Embeder(model, embeddings);
+    }
+
+    async saveToFile(path: string) {
+        await fs.writeFile(path, this.toJson());
+    }
+
+    static async loadFromFile(path: string) {
+        return await Embeder.fromJson(await fs.readFile(path, 'utf-8'))
     }
 }
 
-const sentences = [
+export const sampleSentences = [
     "Hello.",
     "How are you?",
     "The dog is cute.",
@@ -77,28 +97,3 @@ const sentences = [
     "ERROR: This is an error.",
     "This is a normal sentence."
 ]
-
-const embeder = await Embeder.new();
-
-console.log(await embeder.findMostSimilars("Hello.", sentences));
-
-// const embeddings = await model.embed(sentences);
-
-// embeddings.print(false);
-
-// for (let i = 0; i < sentences.length; i++) {
-//     const scores: number[] = [];
-//     for (let j = 0; j < sentences.length; j++) {
-//         const sentenceI = tf.slice(embeddings as any, [i, 0], [1]);
-//         const sentenceJ = tf.slice(embeddings as any, [j, 0], [1]);
-//         const sentenceITranspose = false;
-//         const sentenceJTransepose = true;
-//         const score =
-//             tf.matMul(
-//                 sentenceI, sentenceJ, sentenceITranspose, sentenceJTransepose)
-//                 .dataSync();
-//         scores.push(score[0]);
-//     }
-//     console.log(scores);
-// }       
-
