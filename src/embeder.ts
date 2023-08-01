@@ -9,7 +9,10 @@ export class Embeder {
         [sentence: string]: tf.Tensor1D; // 512
     };
 
-    constructor(model: use.UniversalSentenceEncoder, embeddings: { [sentence: string]: tf.Tensor1D; } = {}) {
+    /**
+     * Use `await Embeder.new()` instead.
+     */
+    private constructor(model: use.UniversalSentenceEncoder, embeddings: { [sentence: string]: tf.Tensor1D; } = {}) {
         this.model = model;
         this.embeddings = embeddings;
     }
