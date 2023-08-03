@@ -1,18 +1,18 @@
 import sqlite3 from "sqlite3";
 const { Database } = sqlite3;
 
-interface Element {
+export interface Element {
     id: number;
     path: string;
 }
 
-interface Embedding {
+export interface Embedding {
     id: number;
     sentence: string;
     embedding: number[];
 }
 
-interface ElementEmbedding {
+export interface ElementEmbedding {
     elementId: number;
     embeddingId: number;
     weight: number;
@@ -138,6 +138,10 @@ export class DB extends Database {
 
     async getElements() {
         return await this.allAsync<Element>('SELECT * FROM elements');
+    }
+
+    async getByPathStart(path: string) {
+        return await this.allAsync<Element>('SELECT * FROM elements WHERE path LIKE ?', [path + '%']);
     }
 
     // Embedding
