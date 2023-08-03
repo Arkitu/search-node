@@ -2,3 +2,4 @@ build
 node_modules
 embeddings.json
 cache.db
+tsconfig.tsbuildinfo
