@@ -12,14 +12,15 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "typescript": "^5.1.6",
+    "nodemon": "*",
     "ts-node": "*",
-    "nodemon": "*"
+    "typescript": "*"
   },
   "dependencies": {
     "@tensorflow-models/universal-sentence-encoder": "*",
     "@tensorflow/tfjs-core": "*",
     "@tensorflow/tfjs-node": "*",
+    "boxen": "^7.1.1",
     "sqlite3": "*"
   },
   "nodemonConfig": {
