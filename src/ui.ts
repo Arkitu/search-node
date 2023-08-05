@@ -1,4 +1,7 @@
 import boxen from 'boxen';
+import { rank, Result } from './ranking.js';
+import { DB } from './db.js';
+import { Embeder } from './embeder.js';
 
 export enum State {
     Initializing,
@@ -9,12 +12,15 @@ export enum State {
 }
 
 export class UI {
-    input: string;
-    state: State;
+    input: string = '';
+    state: State = State.Initializing;
+    results: Result[] = [];
+    db: DB;
+    embeder: Embeder;
 
-    constructor() {
-        this.input = '';
-        this.state = State.Initializing;
+    constructor(db: DB, embeder: Embeder) {
+        this.db = db;
+        this.embeder = embeder;
     }
 
     async run() {
@@ -54,11 +60,34 @@ export class UI {
         return State.Tapping;
     }
 
-    async runTapping(): Promise<State> {
+    async reloadResults() {
+        this.results = await rank(this.db, this.embeder, this.input);
+    }
+
+    async getDisplayText(): Promise<string> {
+        let text = boxen(this.input, {
+            float: 'center',
+            width: process.stdout.getWindowSize()[0]
+        });
+
+        text += '\n';
+
+        for (const result of this.results) {
+            text += `${result.score.toFixed(2)} ${result.path}\n`;
+        }
+
+        return text;
+    }
+
+    async refeshDisplay() {
         console.clear();
-        process.stdout.write(boxen(this.input));
+        process.stdout.write(await this.getDisplayText());
+    }
+
+    async runTapping(): Promise<State> {
+        await this.refeshDisplay();
         return new Promise<State>((resolve, reject) => {
-            const listener = (data: Buffer) => {
+            const listener = async (data: Buffer) => {
                 const key = data.toString();
                 // Enter
                 if (key === '\r') {
@@ -73,8 +102,8 @@ export class UI {
                 else {
                     this.input += key;
                 }
-                console.clear();
-                process.stdout.write(boxen(this.input));
+                await this.reloadResults();
+                await this.refeshDisplay();
             };
             process.stdin.on('data', listener);
         });
