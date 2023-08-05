@@ -2,6 +2,8 @@ import boxen from 'boxen';
 import { rank, Result } from './ranking.js';
 import { DB } from './db.js';
 import { Embeder } from './embeder.js';
+import chalk from 'chalk';
+import path from 'path';
 
 export enum State {
     Initializing,
@@ -61,7 +63,7 @@ export class UI {
     }
 
     async reloadResults() {
-        this.results = await rank(this.db, this.embeder, this.input);
+        this.results = await rank(this.db, this.embeder, this.input, process.stdout.getWindowSize()[1]);
     }
 
     async getDisplayText(): Promise<string> {
@@ -72,8 +74,16 @@ export class UI {
 
         text += '\n';
 
-        for (const result of this.results) {
-            text += `${result.score.toFixed(2)} ${result.path}\n`;
+        const maxResultCount = process.stdout.getWindowSize()[1] - text.split('\n').length + 1;
+
+        const results = this.results.slice(0, maxResultCount)
+        for (const [i, result] of results.entries()) {
+            const path = result.path.split(this.input).join(chalk.bold(this.input))
+
+            text += `${result.score.toFixed(2)} ${path}`;
+            if (i != results.length - 1) {
+                text += '\n';
+            }
         }
 
         return text;
@@ -85,6 +95,7 @@ export class UI {
     }
 
     async runTapping(): Promise<State> {
+        await this.reloadResults();
         await this.refeshDisplay();
         return new Promise<State>((resolve, reject) => {
             const listener = async (data: Buffer) => {

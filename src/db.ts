@@ -140,7 +140,11 @@ export class DB extends Database {
         return await this.allAsync<Element>('SELECT * FROM elements');
     }
 
-    async getByPathStart(path: string) {
+    async getElementByPartialPath(path: string) {
+        return await this.allAsync<Element>('SELECT * FROM elements WHERE path LIKE ?', ['%' + path + '%']);
+    }
+
+    async getElementByPathStart(path: string) {
         return await this.allAsync<Element>('SELECT * FROM elements WHERE path LIKE ?', [path + '%']);
     }
 
