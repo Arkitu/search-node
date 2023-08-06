@@ -3,6 +3,7 @@ import { promises as fs, exists } from "fs";
 import { UI } from "./ui.js";
 import { Embeder } from "./embeder.js";
 import { join } from "path";
+import {globby} from 'globby';
 
 const targetPath = process.argv[process.argv.length - 1];
 
@@ -12,40 +13,52 @@ const db = await DB.new();
 
 console.log("Getting directory map...");
 
-async function iterOverDir(path:string) {
-    try {
-        (await fs.readdir(path)).forEach(async (x) => {
-            const newPath = join(path, x);
-            try {
-                if ((await fs.stat(newPath)).isDirectory()) {
-                    await iterOverDir(newPath);
-                } else {
-                    await db.createElementIfNotExists(newPath);
-                }
-            } catch (e) {
-                //@ts-ignore
-                if (e?.code !== 'ENOENT' && e?.code !== 'EACCES', e?.code !== 'EPERM') {
-                    //@ts-ignore
-                    console.debug((e as Error).code);
-                    throw e;
-                }
-            }
-        });
-    } catch (e) {
-        //@ts-ignore
-        if (e?.code !== 'ENOENT' && e?.code !== 'EACCES' && e?.code !== 'EPERM') {
-            throw e;
-        }
-    }
-}
+const paths = await globby(targetPath, {
 
-await iterOverDir(targetPath);
+});
 
-console.log("Loading embeder...");
+console.log(paths)
 
-const embeder = await Embeder.new();
+// async function iterOverDir(path:string) {
+//     try {
+//         await Promise.all(
+//             (await fs.readdir(path)).map((x) =>
+//                 new Promise((resolve, reject) => {
+//                     const newPath = join(path, x);
+//                     try {
+//                         fs.stat(newPath).then((stat) => {
+//                             if (stat.isDirectory()) {
+//                                 iterOverDir(newPath).then(resolve).catch(reject);
+//                             } else {
+//                                 db.createElementIfNotExists(newPath).then(resolve).catch(reject);
+//                             }
+//                         }).catch(reject);
+//                     } catch (e) {
+//                         //@ts-ignore
+//                         if (!['ENOENT', 'EACCES', 'EPERM', 'EBADF'].includes(e?.code)) {
+//                             console.debug(newPath);
+//                             throw e;
+//                         }
+//                     }
+//                 })
+//             )
+//         );
+//     } catch (e) {
+//         //@ts-ignore
+//         if (!['ENOENT', 'EACCES', 'EPERM', 'EBADF'].includes(e?.code)) {
+//             console.debug(path);
+//             throw e;
+//         }
+//     }
+// }
 
-console.log("Done")
+//await iterOverDir(targetPath);
 
-const ui = new UI(db, embeder);
-await ui.run();
+// console.log("Loading embeder...");
+
+// const embeder = await Embeder.new();
+
+// console.log("Done")
+
+// const ui = new UI(db, embeder);
+// await ui.run();
