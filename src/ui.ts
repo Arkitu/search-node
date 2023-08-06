@@ -3,7 +3,6 @@ import { rank, Result } from './ranking.js';
 import { DB } from './db.js';
 import { Embeder } from './embeder.js';
 import chalk from 'chalk';
-import path from 'path';
 
 export enum State {
     Initializing,
